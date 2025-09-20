@@ -6,14 +6,17 @@ import pandas as pd
 from data import cargar_datos, procesar_serie, split_train_test
 from model import entrenar_sarima, forecast, calcular_metricas
 
-# ---------------------
+# ==============================
 # LOGIN
-# ---------------------
+# ==============================
 def login():
     st.title("🔒 Login")
+    st.markdown("Ingresa usuario y contraseña para acceder a la app")
+
     username = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
     login_button = st.button("Entrar")
+
     if login_button:
         if username == "admin" and password == "admin":
             st.session_state["logged_in"] = True
@@ -22,33 +25,36 @@ def login():
 
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
+
 if not st.session_state["logged_in"]:
     login()
     st.stop()
 
-# ---------------------
-# CONFIGURACIÓN
-# ---------------------
+# ==============================
+# CONFIG
+# ==============================
 st.set_page_config(page_title="Predicción Ventas SARIMA", page_icon="📊", layout="wide")
 st.title("Predicción de Ventas con SARIMA")
 
-# ---------------------
+# ==============================
 # CARGA Y PROCESO DE DATOS
-# ---------------------
+# ==============================
 uploaded_file = st.file_uploader("Sube archivo de ventas (Excel)", type=["xlsx"])
 df_hist = cargar_datos(uploaded_file=uploaded_file)
-df_sum  = procesar_serie(df_hist)
+
+if df_hist is None:
+    st.stop()  # detiene si hubo error de validación
+
+df_sum = procesar_serie(df_hist)
 train, test = split_train_test(df_sum)
 
-st.write(f"Train periods: {len(train)}, Test periods: {len(test)}")
 
-# ---------------------
+# ==============================
 # ENTRENAR MODELO
-# ---------------------
+# ==============================
 model_fit = entrenar_sarima(train)
 pred_test, pred_ci = forecast(model_fit, len(test))
 rmse_weekly, mape_weekly, df_test_weekly, df_pred_weekly = calcular_metricas(test, pred_test)
-
 
 # ---------------------
 # TABS
@@ -96,7 +102,7 @@ with tab2:
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_forecast[["Fecha","Predicción"]].to_excel(writer, index=False, sheet_name="Forecast Semanal")
-    st.download_button("⬇️ Descargar forecast semanal", data=output.getvalue(),
+    st.download_button("Descargar forecast semanal", data=output.getvalue(),
                        file_name="forecast_sarima_semanal.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 # ------------------------------
