@@ -35,7 +35,7 @@ st.title("Predicción de Ventas con SARIMA")
 # ---------------------
 # CARGA Y PROCESO DE DATOS
 # ---------------------
-uploaded_file = st.file_uploader("📂 Sube archivo de ventas (Excel)", type=["xlsx"])
+uploaded_file = st.file_uploader("Sube archivo de ventas (Excel)", type=["xlsx"])
 df_hist = cargar_datos(uploaded_file=uploaded_file)
 df_sum  = procesar_serie(df_hist)
 train, test = split_train_test(df_sum)
@@ -64,7 +64,7 @@ with tab1:
     ax.plot(train.index, train.values, label="Train", marker="o")
     ax.plot(test.index, test.values, label="Test", color="black", linewidth=1.2)
     ax.plot(pred_test.index, pred_test.values, label="Predicción Test", color="red")
-    ax.set_title("SARIMA: Entrenamiento + Test Semanal")
+    ax.set_title("SARIMA Histórico")
     ax.set_ylabel("Ventas (S/)")
     ax.legend()
     st.pyplot(fig)
