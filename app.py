@@ -107,16 +107,15 @@ with tab2:
                        file_name="forecast_sarima_semanal.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 # ------------------------------
-# TAB 3: Evaluación Semanal
+# TAB 3: Evaluación del Modelo
 # ------------------------------
-
 
 with tab3:
     col1, col2 = st.columns(2)
     col1.metric("📏 RMSE", f"{rmse_weekly:.2f}")
     col2.metric("📐 MAPE", f"{mape_weekly:.2f} %")
 
-    # Gráfico evaluación semanal
+    # --- Gráfico Real vs Predicción ---
     fig_eval, ax_eval = plt.subplots(figsize=(10,4))
     ax_eval.plot(df_test_weekly.index, df_test_weekly.values, label="Real Semanal", marker="o")
     ax_eval.plot(df_pred_weekly.index, df_pred_weekly.values, label="Predicción Semanal", marker="x")
@@ -126,28 +125,26 @@ with tab3:
     ax_eval.legend()
     st.pyplot(fig_eval)
 
-    # ==============================
-    # ANÁLISIS DE AUTOCORRELACIÓN (RESIDUOS)
-    # ==============================
-    st.subheader("Análisis de Residuos")
+    st.markdown("### 🔍 Análisis de Autocorrelación")
 
-    resid = model_fit.resid  # residuos del modelo
+    # --- ACF y PACF de la serie original (ventas históricas) ---
+    st.subheader("ACF y PACF de las Ventas Históricas")
+    fig_orig, axes = plt.subplots(1, 2, figsize=(12,4))
+    plot_acf(train, lags=40, ax=axes[0])
+    plot_pacf(train, lags=40, ax=axes[1])
+    axes[0].set_title("ACF - Serie Original")
+    axes[1].set_title("PACF - Serie Original")
+    st.pyplot(fig_orig)
 
-    col3, col4 = st.columns(2)
-
-    # ACF
-    with col3:
-        fig_acf, ax_acf = plt.subplots(figsize=(5,3))
-        plot_acf(resid, lags=30, ax=ax_acf)
-        ax_acf.set_title("ACF de los Residuos")
-        st.pyplot(fig_acf)
-
-    # PACF
-    with col4:
-        fig_pacf, ax_pacf = plt.subplots(figsize=(5,3))
-        plot_pacf(resid, lags=30, ax=ax_pacf)
-        ax_pacf.set_title("PACF de los Residuos")
-        st.pyplot(fig_pacf)
+    # --- ACF y PACF de los residuos ---
+    st.subheader("ACF y PACF de los Residuos del Modelo")
+    resid = model_fit.resid
+    fig_resid, axes = plt.subplots(1, 2, figsize=(12,4))
+    plot_acf(resid.dropna(), lags=40, ax=axes[0])
+    plot_pacf(resid.dropna(), lags=40, ax=axes[1])
+    axes[0].set_title("ACF - Residuos")
+    axes[1].set_title("PACF - Residuos")
+    st.pyplot(fig_resid)
 
     st.markdown("""
      **Interpretación ideal:**  
