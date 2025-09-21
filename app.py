@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from io import BytesIO
 import pandas as pd
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from data import cargar_datos, procesar_serie, split_train_test
 from model import entrenar_sarima, forecast, calcular_metricas
@@ -108,11 +109,14 @@ with tab2:
 # ------------------------------
 # TAB 3: Evaluación Semanal
 # ------------------------------
+
+
 with tab3:
     col1, col2 = st.columns(2)
     col1.metric("📏 RMSE", f"{rmse_weekly:.2f}")
     col2.metric("📐 MAPE", f"{mape_weekly:.2f} %")
 
+    # Gráfico evaluación semanal
     fig_eval, ax_eval = plt.subplots(figsize=(10,4))
     ax_eval.plot(df_test_weekly.index, df_test_weekly.values, label="Real Semanal", marker="o")
     ax_eval.plot(df_pred_weekly.index, df_pred_weekly.values, label="Predicción Semanal", marker="x")
@@ -121,6 +125,37 @@ with tab3:
     ax_eval.set_xlabel("Semana")
     ax_eval.legend()
     st.pyplot(fig_eval)
+
+    # ==============================
+    # ANÁLISIS DE AUTOCORRELACIÓN (RESIDUOS)
+    # ==============================
+    st.subheader("Análisis de Residuos")
+
+    resid = model_fit.resid  # residuos del modelo
+
+    col3, col4 = st.columns(2)
+
+    # ACF
+    with col3:
+        fig_acf, ax_acf = plt.subplots(figsize=(5,3))
+        plot_acf(resid, lags=30, ax=ax_acf)
+        ax_acf.set_title("ACF de los Residuos")
+        st.pyplot(fig_acf)
+
+    # PACF
+    with col4:
+        fig_pacf, ax_pacf = plt.subplots(figsize=(5,3))
+        plot_pacf(resid, lags=30, ax=ax_pacf)
+        ax_pacf.set_title("PACF de los Residuos")
+        st.pyplot(fig_pacf)
+
+    st.markdown("""
+     **Interpretación ideal:**  
+    - La mayoría de las barras debe estar **dentro del área azul** (intervalo de confianza).  
+    - Si se cumple → el modelo capturó bien la estructura temporal.  
+    - Si no se cumple → aún queda información en los residuos.
+    """)
+
 
 # ------------------------------
 # TAB 4: Análisis por Clientes
